@@ -4,6 +4,17 @@ import http.client
 import os
 
 
+def change_price(price):
+    if price < 5000000:
+        return price + price * 5 / 100
+    elif price < 10000000:
+        return price + price * 4 / 100
+    elif price < 20000000:
+        return price + price * 3 / 100
+    else:
+        return price + price * 2 / 100
+
+
 class EwaysSpider(scrapy.Spider):
     name = "eways"
     allowed_domains = ["panel.eways.ir"]
@@ -17,7 +28,6 @@ class EwaysSpider(scrapy.Spider):
         "https://panel.eways.co/Store/List/16778/2/2/0/0/0/10000000000",
         "https://panel.eways.co/store/list/2556/2/2/0/0/0/10000000000/"
     ])
-    conn = http.client.HTTPSConnection("alidombe.com")
     headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Basic '
@@ -37,31 +47,38 @@ class EwaysSpider(scrapy.Spider):
                 for i in range(min(len(names), len(prices))):
                     if prices[i] != "##price##":
                         try:
-                            if str(round(int("".join(prices[i].split(","))) / 10)) == data[names[i]]["price"]:
-                                print("it is!")
-                            else:
+                            if str(round(change_price(int("".join(prices[i].split(","))) / 10))) != data[names[i]]["price"]:
                                 payload = json.dumps({
                                     "name": names[i],
-                                    "regular_price": str(round(int("".join(prices[i].split(","))) / 10)),
+                                    "regular_price": str(round(change_price(int("".join(prices[i].split(","))) / 10))),
                                 })
                                 update_id = data[names[i]]["id"]
-                                self.conn.request("PUT", f"/wp-json/wc/v3/products/{update_id}", payload, self.headers)
+                                conn = http.client.HTTPSConnection("alidombe.com")
+                                conn.request("PUT", f"/wp-json/wc/v3/products/{update_id}", payload, self.headers)
+                                res = conn.getresponse()
+                                data3 = json.loads(res.read().decode())
                                 data[names[i]] = {
-                                    "price": str(round(int("".join(prices[i].split(","))) / 10)),
+                                    "price": str(round(change_price(int("".join(prices[i].split(","))) / 10))),
+                                    "id": data3['id'],
+                                    "permalink": data3['permalink'],
+                                    "site": response.request.url.split('/')[2]
                                 }
+
                         except KeyError:
                             payload = json.dumps({
                                 "name": names[i],
-                                "regular_price": str(round(int("".join(prices[i].split(","))) / 10)),
+                                "regular_price": str(round(change_price(int("".join(prices[i].split(","))) / 10))),
                                 "type": "simple",
                             })
-                            self.conn.request("POST", "/wp-json/wc/v3/products", payload, self.headers)
-                            response = self.conn.getresponse()
-                            data2 = json.loads(response.read().decode())
+                            conn = http.client.HTTPSConnection("alidombe.com")
+                            conn.request("POST", "/wp-json/wc/v3/products", payload, self.headers)
+                            res = conn.getresponse()
+                            data2 = json.loads(res.read().decode())
                             data[names[i]] = {
-                                "price": str(round(int("".join(prices[i].split(","))) / 10)),
+                                "price": str(round(change_price(int("".join(prices[i].split(","))) / 10))),
                                 "id": data2['id'],
-                                "permalink": data2['permalink']
+                                "permalink": data2['permalink'],
+                                "site": response.request.url.split('/')[2]
                             }
                 jsonFile.seek(0)
                 json.dump(data, jsonFile, indent=4)
@@ -76,16 +93,18 @@ class EwaysSpider(scrapy.Spider):
                     if prices[i] != "##price##":
                         payload = json.dumps({
                             "name": names[i],
-                            "regular_price": str(round(int("".join(prices[i].split(","))) / 10)),
+                            "regular_price": str(round(change_price(int("".join(prices[i].split(","))) / 10))),
                             "type": "simple",
                         })
-                        self.conn.request("POST", "/wp-json/wc/v3/products", payload, self.headers)
-                        response = self.conn.getresponse()
-                        data3 = json.loads(response.read().decode())
+                        conn = http.client.HTTPSConnection("alidombe.com")
+                        conn.request("POST", "/wp-json/wc/v3/products", payload, self.headers)
+                        res = conn.getresponse()
+                        data3 = json.loads(res.read().decode())
                         item_dict[names[i]] = {
-                            "price": str(round(int("".join(prices[i].split(","))) / 10)),
+                            "price": str(round(change_price(int("".join(prices[i].split(","))) / 10))),
                             "id": data3["id"],
-                            "permalink": data3['permalink']
+                            "permalink": data3['permalink'],
+                            "site": response.request.url.split('/')[2]
                         }
                 json_string = json.dumps(item_dict)
                 jsonFile.write(json_string)
