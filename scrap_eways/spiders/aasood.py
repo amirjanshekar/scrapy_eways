@@ -26,8 +26,7 @@ class AasoodSpider(scrapy.Spider):
                   "https://aasood.com/_next/data/t4RoDaxw0PLVPdYEP0gTy/product-list/200001002.json?index=200001002",
                   "https://aasood.com/_next/data/t4RoDaxw0PLVPdYEP0gTy/product-list/200001003.json?index=200001003",
                   "https://aasood.com/_next/data/t4RoDaxw0PLVPdYEP0gTy/product-list/200001005.json?index=200001005",
-                  "https://aasood.com/_next/data/t4RoDaxw0PLVPdYEP0gTy/product-list/200001007.json?index=200001007",
-                  ""]
+                  "https://aasood.com/_next/data/t4RoDaxw0PLVPdYEP0gTy/product-list/200001007.json?index=200001007"]
     headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Basic '
